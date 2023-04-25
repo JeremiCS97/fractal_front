@@ -46,7 +46,7 @@ export default function AddEditOrder() {
 
   const baseURL = "http://localhost:8080/";
 
-  const URLDeleteLineOrder = baseURL + "lineorder/deleteorder/";
+  let URLDeleteLineOrder = "http://localhost:8080/lineorder/delete/";
 
   let URLOrder = "";
 
@@ -361,7 +361,7 @@ export default function AddEditOrder() {
           ¿Are you sure you want to delete this line?
         </h4>
       <Stack spacing = {4} direction = "row">
-        <Button variant="contained" onClick={function(){callHandleDeleteOrder(openEditLine.idLine)}}>Yes</Button>
+        <Button variant="contained" onClick={function(){deleteLineOrder(openEditLine.idLine)}}>Yes</Button>
         <Button variant="contained" onClick={handleCloseLine}>No</Button>
       </Stack>
       </Box>
