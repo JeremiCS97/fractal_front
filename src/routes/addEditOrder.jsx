@@ -45,6 +45,7 @@ export default function AddEditOrder() {
 
 
   const baseURL = "http://localhost:8080/";
+  const URLDeleteLineOrder = baseURL + "lineorder/deleteorder/";
   let URLOrder = "";
   let URLListProducts = "";
 
@@ -54,8 +55,6 @@ export default function AddEditOrder() {
      URLOrder= baseURL + "order/findById/"+queryParameters.get('id');
      URLListProducts = baseURL + "lineorder/findByOrderId/"+queryParameters.get('id') ;
   }
-
-  const [order, setOrder] = useState([]);
 
   const urlFindProduct = "http://localhost:8080/product/findAll";
 
@@ -83,6 +82,13 @@ export default function AddEditOrder() {
     })
   }
 
+  function deleteLineOrder(a){
+    axios.post(URLDeleteLineOrder+a).then((response)=>{
+      response.header("Access-Control-Allow-Origin", "http://localhost:8080");
+      console.log("Se eliminó la linea numero: ",a);
+    })
+  }
+
   const queryParams = new URLSearchParams(window.location.search);
 
   const id = queryParams.get("id");
@@ -97,6 +103,10 @@ export default function AddEditOrder() {
     console.log("aqui");
     console.log(products);
   };
+
+  const handleDeleteLineOrder = (a) =>{
+    deleteLineOrder(a);
+  }
 
   const navigateHome = () => {
     navigate('/my-orders');
@@ -225,7 +235,7 @@ export default function AddEditOrder() {
                 <Stack direction="row" spacing={0}>
                   <Button endIcon={<EditIcon/>}>
                   </Button>
-                  <Button endIcon={<DeleteIcon/>}>
+                  <Button endIcon={<DeleteIcon/>} onClick ={function(){handleDeleteLineOrder(lineproduct.idLineOrder)}}>
                   </Button> 
                 </Stack>
                 </TableCell>

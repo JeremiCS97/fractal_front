@@ -15,17 +15,59 @@ import Stack from '@mui/material/Stack';
 
 import axios from "axios";
 import { useState, useEffect } from 'react';
+import { Box, FormControl, InputLabel, Modal } from '@mui/material';
 
 export default function MyOrders() {
+
+  const style = {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: 400,
+    bgcolor: 'background.paper',
+    border: '2px solid #000',
+    boxShadow: 24,
+    p: 4,
+  };
+
   const navigate = useNavigate();
-  const baseURL = "http://localhost:8080/order/findAllOrder";
+
+  const URLGetOrders = "http://localhost:8080/order/findAllOrder";
+  let URLDeleteOrder = "http://localhost:8080/order/delete/"
+
   const [ordenes, setOrdenes] = useState([]);
+
+  const [open, setOpenQuestion] = useState({id:'',state:false});
+
+  const handleClose = () => setOpenQuestion({id:'',state:false});
+
   function crearListado(){
-    axios.get(baseURL).then((response) => {
+    axios.get(URLGetOrders).then((response) => {
       setOrdenes(response.data);
       console.log(response.data);
     });
 
+  };
+
+  function handleOpenQuestion(a){
+    setOpenQuestion({id:a,state:true});  
+  };
+
+  function callHandleDeleteOrder(a){
+    handleDeleteOrder(a);
+  }
+
+  const handleDeleteOrder = (a) =>{
+    deleteOrder(a);
+  }
+  function deleteOrder(a){
+    axios.post(URLDeleteOrder+a).then(() => {
+      console.log(URLDeleteOrder+a);
+      console.log("Se eliminó correctamente la orden");
+      setOpenQuestion({id:a,state:false});
+      window.location.reload(false);
+    });
   }
 
   useEffect(() => {
@@ -77,7 +119,7 @@ export default function MyOrders() {
                   <Button variant="contained" endIcon={<EditIcon />} onClick={() => navigate('/addEditOrder?type=Edit&id='+row.idOrder)}>
                     Edit
                   </Button>
-                  <Button variant="contained" endIcon={<DeleteIcon />}>
+                  <Button variant="contained" endIcon={<DeleteIcon />} onClick ={()=>handleOpenQuestion(row.idOrder)}>
                     Delete 
                   </Button> 
                 </Stack>
@@ -88,6 +130,27 @@ export default function MyOrders() {
         </Table>
       </TableContainer> 
       </div>
+
+
+      <Modal
+      open={open.state}
+      onClose={handleClose}
+      aria-labelledby="modal-modal-title"
+      aria-describedby="modal-modal-description"
+      >
+      <Box sx={style}>
+        <h1>
+          Delete order
+        </h1>
+        <h4>
+          ¿Are you sure you want to delete this order?
+        </h4>
+      <Stack spacing = {4} direction = "row">
+        <Button variant="contained" onClick={function(){callHandleDeleteOrder(open.id)}}>Yes</Button>
+        <Button variant="contained" onClick={handleClose}>No</Button>
+      </Stack>
+      </Box>
+      </Modal>
     </div>
   );
 }
