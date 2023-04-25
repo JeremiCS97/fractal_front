@@ -35,6 +35,7 @@ export default function MyOrders() {
 
   const URLGetOrders = "http://localhost:8080/order/findAllOrder";
   let URLDeleteOrder = "http://localhost:8080/order/delete/"
+  const URLNewOrder = "http://localhost:8080/order/insert";
 
   const [ordenes, setOrdenes] = useState([]);
 
@@ -61,6 +62,11 @@ export default function MyOrders() {
   const handleDeleteOrder = (a) =>{
     deleteOrder(a);
   }
+
+  const handleSendNewOrder = () =>{
+    insertNewOrder();
+  }
+
   function deleteOrder(a){
     axios.post(URLDeleteOrder+a).then(() => {
       console.log(URLDeleteOrder+a);
@@ -69,6 +75,15 @@ export default function MyOrders() {
       window.location.reload(false);
     });
   }
+
+  function insertNewOrder(){
+    axios.post(URLNewOrder,{}).then((response) => {
+      console.log(response.data.idOrder);
+      console.log("Se insertó una nueva orden");
+      navigate('/addEditOrder?type=Add&idNewOrder='+response.data.idOrder)
+    });
+  }
+
 
   useEffect(() => {
     crearListado();
@@ -85,7 +100,7 @@ export default function MyOrders() {
           <h1>My Orders</h1>
         </div>
         <div> 
-          <Button variant="contained" endIcon={<AddIcon />} onClick={() => navigate('/addEditOrder?type=Add')}>New Order</Button>
+          <Button variant="contained" endIcon={<AddIcon />} onClick={handleSendNewOrder}>New Order</Button>
         </div>
         
       </div>
@@ -113,7 +128,7 @@ export default function MyOrders() {
                 <TableCell>{row.orderNumber}</TableCell>
                 <TableCell>{row.dateOrder}</TableCell>
                 <TableCell>{row.statusOrder}</TableCell>
-                <TableCell>{row.statusOrder}</TableCell>
+                <TableCell>{row.ammountPrice}</TableCell>
                 <TableCell>
                 <Stack direction="row" spacing={2}>
                   <Button variant="contained" endIcon={<EditIcon />} onClick={() => navigate('/addEditOrder?type=Edit&id='+row.idOrder)}>

@@ -45,11 +45,27 @@ export default function AddEditOrder() {
 
 
   const baseURL = "http://localhost:8080/";
+
   const URLDeleteLineOrder = baseURL + "lineorder/deleteorder/";
+
   let URLOrder = "";
+
   let URLListProducts = "";
 
   let isDisabled = true;
+
+  const queryParams = new URLSearchParams(window.location.search);
+
+  const id = queryParams.get("id");
+
+  const type = queryParams.get("type");
+
+  const idNewOrder = queryParams.get("idNewOrder"); 
+
+  const [openProducts, setOpenProducts] = useState(false);
+
+  const [openEditLine, setOpenEditLine] = useState({idLine:'',state:false});
+
 
   if (queryParameters.get('id') != undefined ){
      URLOrder= baseURL + "order/findById/"+queryParameters.get('id');
@@ -83,28 +99,23 @@ export default function AddEditOrder() {
   }
 
   function deleteLineOrder(a){
-    axios.post(URLDeleteLineOrder+a).then((response)=>{
-      response.header("Access-Control-Allow-Origin", "http://localhost:8080");
+    axios.post(URLDeleteLineOrder+a).then(()=>{
       console.log("Se eliminó la linea numero: ",a);
+      setOpenEditLine({id:a,state:false});
+      window.location.reload(false);
     })
   }
-
-  const queryParams = new URLSearchParams(window.location.search);
-
-  const id = queryParams.get("id");
-
-  const type = queryParams.get("type");
-
-  const [open, setOpenProducts] = useState(false);
 
   const handleOpenListProducts = () => {
     setOpenProducts(true);
     loadProducts();
-    console.log("aqui");
-    console.log(products);
   };
 
-  const handleDeleteLineOrder = (a) =>{
+  const handleOpenLineOrder = (a) => {
+    setOpenEditLine({idLine:a,state:true});
+  };
+
+  const callHandleDeleteOrder = (a) =>{
     deleteLineOrder(a);
   }
 
@@ -116,12 +127,19 @@ export default function AddEditOrder() {
     setSelectedProduct(e.target.value);
   };
 
-  const handleClose = () => setOpenProducts(false);
+  const handleCloseProducts = () => setOpenProducts(false);
+
+  const handleCloseLine = () => setOpenEditLine({id:'',state:false});
+  
 
   useEffect(() => {
     
     if (type =='Add') {
-      setOrderDate(new Date());
+      let d = new Date();
+      let ye = new Intl.DateTimeFormat('en', { year: 'numeric' }).format(d);
+      let mo = new Intl.DateTimeFormat('en', { month: '2-digit' }).format(d);
+      let da = new Intl.DateTimeFormat('en', { day: '2-digit' }).format(d);
+      setOrderDate(ye+'-'+mo+'-'+da);
       setNumberProducts(0);
       setAmmountPrice(0.0);
       isDisabled = false;
@@ -235,7 +253,7 @@ export default function AddEditOrder() {
                 <Stack direction="row" spacing={0}>
                   <Button endIcon={<EditIcon/>}>
                   </Button>
-                  <Button endIcon={<DeleteIcon/>} onClick ={function(){handleDeleteLineOrder(lineproduct.idLineOrder)}}>
+                  <Button endIcon={<DeleteIcon/>} onClick ={function(){handleOpenLineOrder(lineproduct.idLineOrder)}}>
                   </Button> 
                 </Stack>
                 </TableCell>
@@ -248,8 +266,8 @@ export default function AddEditOrder() {
           
 
       <Modal
-      open={open}
-      onClose={handleClose}
+      open={openProducts}
+      onClose={handleCloseProducts}
       aria-labelledby="modal-modal-title"
       aria-describedby="modal-modal-description"
       >
@@ -295,7 +313,27 @@ export default function AddEditOrder() {
       </FormControl>
       <Stack spacing = {4} direction = "row">
         <Button variant="contained" >Save</Button>
-        <Button variant="contained" onClick={handleClose}>Cancel</Button>
+        <Button variant="contained" onClick={handleCloseProducts}>Cancel</Button>
+      </Stack>
+      </Box>
+      </Modal>
+
+      <Modal
+      open={openEditLine.state}
+      onClose={handleCloseLine}
+      aria-labelledby="modal-modal-title"
+      aria-describedby="modal-modal-description"
+      >
+      <Box sx={style}>
+        <h1>
+          Delete line
+        </h1>
+        <h4>
+          ¿Are you sure you want to delete this line?
+        </h4>
+      <Stack spacing = {4} direction = "row">
+        <Button variant="contained" onClick={function(){callHandleDeleteOrder(openEditLine.idLine)}}>Yes</Button>
+        <Button variant="contained" onClick={handleCloseLine}>No</Button>
       </Stack>
       </Box>
       </Modal>
