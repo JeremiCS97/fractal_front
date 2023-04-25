@@ -31,7 +31,7 @@ export default function AddEditOrder() {
 
   let [dateOrder, setOrderDate] = useState ('');
 
-  let [qty, setQty] = useState ('');
+  let [selectedQty, setQty] = useState ('');
 
   const [numberProducts, setNumberProducts] = useState ('');
 
@@ -39,7 +39,7 @@ export default function AddEditOrder() {
 
   const [products, setProducts] = useState ([]);
 
-  const [selectedProduct, setSelectedProduct] = useState ('');
+  let [selectedProduct, setSelectedProduct] = useState ('');
   
   const [lineproducts, setLineProducts] = useState([]);
 
@@ -56,7 +56,7 @@ export default function AddEditOrder() {
 
   const queryParams = new URLSearchParams(window.location.search);
 
-  const id = queryParams.get("id");
+  let id = '';
 
   const type = queryParams.get("type");
 
@@ -66,13 +66,20 @@ export default function AddEditOrder() {
 
   const [openEditLine, setOpenEditLine] = useState({idLine:'',state:false});
 
-
-  if (queryParameters.get('id') != undefined ){
-     URLOrder= baseURL + "order/findById/"+queryParameters.get('id');
-     URLListProducts = baseURL + "lineorder/findByOrderId/"+queryParameters.get('id') ;
+  if(type != 'Add'){
+    id = queryParams.get("id");
+  }
+  else{
+    id = queryParams.get("idNewOrder");
   }
 
+  URLOrder= baseURL + "order/findById/"+id;
+  URLListProducts = baseURL + "lineorder/findByOrderId/"+id ;
+  
+
   const urlFindProduct = "http://localhost:8080/product/findAll";
+
+  const urlInsertLineOrder = "http://localhost:8080/lineorder/insert";
 
   function findOrder(){
     axios.get(URLOrder).then((response) => {
@@ -86,14 +93,12 @@ export default function AddEditOrder() {
   
   function loadProducts(){
     axios.get(urlFindProduct).then((response)=>{
-      console.log(response,'loadProducts response');
       setProducts(response.data);
     })
   }
 
   function loadLineProducts(){
     axios.get(URLListProducts).then((response)=>{
-      console.log(response,'loadLineProducts response');
       setLineProducts(response.data);
     })
   }
@@ -125,7 +130,27 @@ export default function AddEditOrder() {
 
   const handleProductChange = (e) => {
     setSelectedProduct(e.target.value);
+    console.log("este es el producto:"+selectedProduct);
   };
+
+  const handleAddLine = () =>{
+    console.log("id producto:" + selectedProduct);
+    console.log("id Order:" + id);
+    console.log("qtyLineOrder:" + selectedQty);
+    axios.post(urlInsertLineOrder,{
+        product:{
+          idProduct:selectedProduct
+        },
+        order:{
+          idOrder:id
+        },
+        qtyLineOrder:selectedQty
+      
+    }).then((response)=>{
+      window.location.reload(false);
+    }
+    )
+  }
 
   const handleCloseProducts = () => setOpenProducts(false);
 
@@ -280,7 +305,10 @@ export default function AddEditOrder() {
        <Select
           value={selectedProduct}
           label="Products"
-          onChange={handleProductChange}
+          onChange={event=>{
+            setSelectedProduct(event.target.value);
+            console.log(selectedProduct);
+          }}
         >{products.map((product)=>(
           <MenuItem 
           key={product.idProduct}
@@ -294,7 +322,7 @@ export default function AddEditOrder() {
           <TextField
             id="qty" 
             variant="outlined" 
-            value={qty}
+            value={selectedQty}
             InputProps={{
               inputProps:{
                 max:100,min:0
@@ -303,6 +331,7 @@ export default function AddEditOrder() {
             disabled={false}
             onChange={event => { 
               setQty (event.target.value); 
+              console.log(selectedQty);
             }}
             onKeyPress={event =>{
               if (!/[0-9]/.test(event.key)) {
@@ -312,7 +341,7 @@ export default function AddEditOrder() {
         </Grid>
       </FormControl>
       <Stack spacing = {4} direction = "row">
-        <Button variant="contained" >Save</Button>
+        <Button variant="contained" onClick={handleAddLine}>Add</Button>
         <Button variant="contained" onClick={handleCloseProducts}>Cancel</Button>
       </Stack>
       </Box>
