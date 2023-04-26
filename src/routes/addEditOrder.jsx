@@ -27,11 +27,15 @@ export default function AddEditOrder() {
 
   const [queryParameters] = useSearchParams();
 
-  const [orderNumber, setOrderNumber] = useState ('');
+  const [orNumber, setOrderNumber] = useState ('');
 
-  let [dateOrder, setOrderDate] = useState ('');
+  const [openProducts, setOpenProducts] = useState(false);
 
-  let [selectedQty, setQty] = useState ('');
+  const [openSaveModal, setOpenSaveModal] = useState({idSaveModal:'',state:false});
+
+  const [openEditLine, setOpenEditLine] = useState({idLine:'',state:false});
+
+  const [lineproducts, setLineProducts] = useState([]);
 
   const [numberProducts, setNumberProducts] = useState ('');
 
@@ -41,10 +45,23 @@ export default function AddEditOrder() {
 
   let [selectedProduct, setSelectedProduct] = useState ('');
   
-  const [lineproducts, setLineProducts] = useState([]);
+  let [dateOrder, setOrderDate] = useState ('');
 
+  let [selectedQty, setQty] = useState ('');
 
+  const queryParams = new URLSearchParams(window.location.search);
+  
   const baseURL = "http://localhost:8080/";
+
+  const type = queryParams.get("type");
+
+  const idNewOrder = queryParams.get("idNewOrder"); 
+  
+  const urlFindProduct = "http://localhost:8080/product/findAll";
+
+  const urlInsertLineOrder = "http://localhost:8080/lineorder/insert";
+
+  const urlUpdateNumberOder = "http://localhost:8080/order/updateNumberOrder";
 
   let URLDeleteLineOrder = "http://localhost:8080/lineorder/delete/";
 
@@ -54,17 +71,8 @@ export default function AddEditOrder() {
 
   let isDisabled = true;
 
-  const queryParams = new URLSearchParams(window.location.search);
-
   let id = '';
 
-  const type = queryParams.get("type");
-
-  const idNewOrder = queryParams.get("idNewOrder"); 
-
-  const [openProducts, setOpenProducts] = useState(false);
-
-  const [openEditLine, setOpenEditLine] = useState({idLine:'',state:false});
 
   if(type != 'Add'){
     id = queryParams.get("id");
@@ -74,12 +82,9 @@ export default function AddEditOrder() {
   }
 
   URLOrder= baseURL + "order/findById/"+id;
+  
   URLListProducts = baseURL + "lineorder/findByOrderId/"+id ;
   
-
-  const urlFindProduct = "http://localhost:8080/product/findAll";
-
-  const urlInsertLineOrder = "http://localhost:8080/lineorder/insert";
 
   function findOrder(){
     axios.get(URLOrder).then((response) => {
@@ -105,7 +110,6 @@ export default function AddEditOrder() {
 
   function deleteLineOrder(a){
     axios.post(URLDeleteLineOrder+a).then(()=>{
-      console.log("Se eliminó la linea numero: ",a);
       setOpenEditLine({id:a,state:false});
       window.location.reload(false);
     })
@@ -120,23 +124,25 @@ export default function AddEditOrder() {
     setOpenEditLine({idLine:a,state:true});
   };
 
-  const callHandleDeleteOrder = (a) =>{
-    deleteLineOrder(a);
+  const handleSave = () =>{
+    setOpenSaveModal({idSaveModal:id,state:true});
   }
 
   const navigateHome = () => {
     navigate('/my-orders');
   }
 
-  const handleProductChange = (e) => {
-    setSelectedProduct(e.target.value);
-    console.log("este es el producto:"+selectedProduct);
-  };
+  function handleConfirmSave(a){
+    axios.post(urlUpdateNumberOder,{
+      idOrder:a,
+      orderNumber:orNumber
+    }).then(()=>{
+      window.location.reload(false);
+    }
+    )
+  }
 
-  const handleAddLine = () =>{
-    console.log("id producto:" + selectedProduct);
-    console.log("id Order:" + id);
-    console.log("qtyLineOrder:" + selectedQty);
+  const handleAddLine = (e) =>{
     axios.post(urlInsertLineOrder,{
         product:{
           idProduct:selectedProduct
@@ -146,11 +152,13 @@ export default function AddEditOrder() {
         },
         qtyLineOrder:selectedQty
       
-    }).then((response)=>{
+    }).then(()=>{
       window.location.reload(false);
     }
     )
   }
+
+  const handleCloseSaveModal = () => setOpenSaveModal({idSaveModal:'',state:false});
 
   const handleCloseProducts = () => setOpenProducts(false);
 
@@ -172,8 +180,6 @@ export default function AddEditOrder() {
     else{
       findOrder();
       loadLineProducts();
-      console.log('response de lineproducts');
-      console.log(lineproducts);
     }
   }, []);
 
@@ -199,7 +205,7 @@ export default function AddEditOrder() {
               <TextField 
                 id="orderNumber" 
                 variant="outlined" 
-                value = {orderNumber}
+                value = {orNumber}
                 onChange={event => { 
                   setOrderNumber (event.target.value); 
                 }}/>
@@ -243,7 +249,7 @@ export default function AddEditOrder() {
       </div>
       <div style={{ width: '100%'}}> 
         <Stack spacing = {4} direction = "row">
-          <Button variant="contained">Save</Button>
+          <Button onClick={function() {handleSave(id,true)}} variant="contained">Save</Button>
           <Button onClick={navigateHome} style={{ marginRight: 'auto'}} variant="contained">Cancel</Button>
         </Stack>
       </div>
@@ -366,6 +372,27 @@ export default function AddEditOrder() {
       </Stack>
       </Box>
       </Modal>
+
+      <Modal
+      open={openSaveModal.state}
+      onClose={handleCloseSaveModal}
+      aria-labelledby="modal-modal-title"
+      aria-describedby="modal-modal-description"
+      >
+      <Box sx={style}>
+        <h1>
+          Save changes
+        </h1>
+        <h4>
+          ¿Are you sure you want to save those changes?
+        </h4>
+      <Stack spacing = {4} direction = "row">
+        <Button variant="contained" onClick={function(){handleConfirmSave(openSaveModal.idSaveModal)}}>Save</Button>
+        <Button variant="contained" onClick={handleCloseSaveModal}>Cancel</Button>
+      </Stack>
+      </Box>
+      </Modal>
+
     </div>
   );
 }

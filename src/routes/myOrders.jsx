@@ -11,6 +11,7 @@ import Button from '@mui/material/Button';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
+import GoBackIcon from '@mui/icons-material/ArrowBack';
 import Stack from '@mui/material/Stack';
 
 import axios from "axios";
@@ -94,7 +95,7 @@ export default function MyOrders() {
 
   return (
     <div id="myOrders" style={{ textAlign: 'left', width: '100%'}}> 
-
+      <Button variant="contained" startIcon={<GoBackIcon />} onClick={() => navigate('/')} >Back</Button>
       <div style={{display: "flex", justifyContent: "space-between", alignItems: 'center'}}>
         <div>
           <h1>My Orders</h1>
@@ -116,6 +117,7 @@ export default function MyOrders() {
               <TableCell style={{ backgroundColor: '#1976d2', fontWeight: 'bold', color: 'white'}}># Products</TableCell>
               <TableCell style={{ backgroundColor: '#1976d2', fontWeight: 'bold', color: 'white'}}>Final Price</TableCell>
               <TableCell style={{ backgroundColor: '#1976d2', fontWeight: 'bold', color: 'white'}}>Options</TableCell>
+              <TableCell style={{ backgroundColor: '#1976d2', fontWeight: 'bold', color: 'white'}}>Status </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -127,7 +129,7 @@ export default function MyOrders() {
                 <TableCell component="th" scope="row">{row.idOrder}</TableCell>
                 <TableCell>{row.orderNumber}</TableCell>
                 <TableCell>{row.dateOrder}</TableCell>
-                <TableCell>{row.statusOrder}</TableCell>
+                <TableCell>{row.numberProducts}</TableCell>
                 <TableCell>{row.ammountPrice}</TableCell>
                 <TableCell>
                 <Stack direction="row" spacing={2}>
@@ -138,6 +140,11 @@ export default function MyOrders() {
                     Delete 
                   </Button> 
                 </Stack>
+                </TableCell>
+                <TableCell>
+                  <Button variant="outlined">
+                    {row.statusOrder}
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}
