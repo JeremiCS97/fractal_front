@@ -21,19 +21,16 @@ export default function AddEditOrder() {
     boxShadow: 24,
     p: 4,
   };
-  const [date,setDate] = useState(new Date());
 
   const navigate = useNavigate();
 
-  const [queryParameters] = useSearchParams();
-
   const [orNumber, setOrderNumber] = useState ('');
 
-  const [openProducts, setOpenProducts] = useState(false);
+  const [openProducts, setOpenProducts] = useState({idLine:'',idProduct:'',cantLine:0,qtyAvailable:0,type:'',state:false});
 
   const [openSaveModal, setOpenSaveModal] = useState({idSaveModal:'',state:false});
 
-  const [openEditLine, setOpenEditLine] = useState({idLine:'',state:false});
+  const [openDeleteLine, setOpenDeleteLine] = useState({idLine:'',state:false});
 
   const [lineproducts, setLineProducts] = useState([]);
 
@@ -48,14 +45,14 @@ export default function AddEditOrder() {
   let [dateOrder, setOrderDate] = useState ('');
 
   let [selectedQty, setQty] = useState ('');
+  
+  let [selectedQtyAvailable, setQtyAvailable] = useState('')
 
   const queryParams = new URLSearchParams(window.location.search);
   
   const baseURL = "http://localhost:8080/";
 
   const type = queryParams.get("type");
-
-  const idNewOrder = queryParams.get("idNewOrder"); 
   
   const urlFindProduct = "http://localhost:8080/product/findAll";
 
@@ -63,13 +60,13 @@ export default function AddEditOrder() {
 
   const urlUpdateNumberOder = "http://localhost:8080/order/updateNumberOrder";
 
-  let URLDeleteLineOrder = "http://localhost:8080/lineorder/delete/";
+  const urlDeleteLineOrder = "http://localhost:8080/lineorder/delete/";
+
+  const urlEditLineOrder = "http://localhost:8080/lineorder/edit/";
 
   let URLOrder = "";
 
   let URLListProducts = "";
-
-  let isDisabled = true;
 
   let id = '';
 
@@ -109,19 +106,45 @@ export default function AddEditOrder() {
   }
 
   function deleteLineOrder(a){
-    axios.post(URLDeleteLineOrder+a).then(()=>{
-      setOpenEditLine({id:a,state:false});
+    axios.post(urlDeleteLineOrder+a).then(()=>{
+      setOpenDeleteLine({id:a,state:false});
       window.location.reload(false);
     })
   }
 
-  const handleOpenListProducts = () => {
-    setOpenProducts(true);
+  function editLineOrder(a){
+    axios.post(urlEditLineOrder+a,
+      {
+        product:{
+          idProduct:selectedProduct
+        },
+        order:{
+          idOrder:id
+        },
+        qtyLineOrder:selectedQty
+      }
+      
+      ).then(()=>{
+      window.location.reload(false);
+    })
+  }
+
+  const handleOpenListProducts = (id,idp,cant,qtyAv,st) => {
+    if (cant==0){
+      setQtyAvailable('');
+      setOpenProducts({idLine:id,idProduct:idp,cantLine:cant,qtyAvailable:qtyAv,type:'Add',state:st});
+    }
+    else{
+      setSelectedProduct(idp);
+      setQty(cant);
+      setQtyAvailable(qtyAv);
+      setOpenProducts({idLine:id,idProduct:idp,cantLine:cant,qtyAvailable:qtyAv,type:'Edit',state:st});
+    }
     loadProducts();
   };
 
-  const handleOpenLineOrder = (a) => {
-    setOpenEditLine({idLine:a,state:true});
+  const handleOpenDeleteLineOrder = (a) => {
+    setOpenDeleteLine({idLine:a,state:true});
   };
 
   const handleSave = () =>{
@@ -137,12 +160,12 @@ export default function AddEditOrder() {
       idOrder:a,
       orderNumber:orNumber
     }).then(()=>{
-      window.location.reload(false);
+      navigate('/my-orders');
     }
     )
   }
 
-  const handleAddLine = (e) =>{
+  const handleAddLine = () =>{
     axios.post(urlInsertLineOrder,{
         product:{
           idProduct:selectedProduct
@@ -160,10 +183,9 @@ export default function AddEditOrder() {
 
   const handleCloseSaveModal = () => setOpenSaveModal({idSaveModal:'',state:false});
 
-  const handleCloseProducts = () => setOpenProducts(false);
+  const handleCloseProducts = () => setOpenProducts({idLine:'',idProduct:'',cantLine:0,qtyAvailable:0,type:'',state:false});
 
-  const handleCloseLine = () => setOpenEditLine({id:'',state:false});
-  
+  const handleCloseDeleteLine = () => setOpenDeleteLine({id:'',state:false});
 
   useEffect(() => {
     
@@ -175,7 +197,6 @@ export default function AddEditOrder() {
       setOrderDate(ye+'-'+mo+'-'+da);
       setNumberProducts(0);
       setAmmountPrice(0.0);
-      isDisabled = false;
     }
     else{
       findOrder();
@@ -192,7 +213,7 @@ export default function AddEditOrder() {
           <h1>{type} Order</h1>
         </div>
         <div> 
-          <Button variant="contained" endIcon={<AddIcon />} onClick={handleOpenListProducts}>Add Product</Button>
+          <Button variant="contained" endIcon={<AddIcon />} onClick={function(){handleOpenListProducts('','',0,0,true)}}>Add Product</Button>
         </div>
         
       </div>
@@ -208,7 +229,13 @@ export default function AddEditOrder() {
                 value = {orNumber}
                 onChange={event => { 
                   setOrderNumber (event.target.value); 
-                }}/>
+                }}
+                onKeyPress={event =>{
+                  if (!/[0-9]/.test(event.key)) {
+                    event.preventDefault();
+                  }
+                }}
+                />
             </Grid>
             <Grid sx={{margin:1, display: 'grid'}} item>
               <label>Date Order</label>
@@ -250,7 +277,7 @@ export default function AddEditOrder() {
       <div style={{ width: '100%'}}> 
         <Stack spacing = {4} direction = "row">
           <Button onClick={function() {handleSave(id,true)}} variant="contained">Save</Button>
-          <Button onClick={navigateHome} style={{ marginRight: 'auto'}} variant="contained">Cancel</Button>
+          <Button onClick={navigateHome} style={{ marginRight: 'auto'}} variant="contained">Go back</Button>
         </Stack>
       </div>
       <div>
@@ -282,9 +309,9 @@ export default function AddEditOrder() {
                 <TableCell>{lineproduct.priceLineOrder}</TableCell>
                 <TableCell>
                 <Stack direction="row" spacing={0}>
-                  <Button endIcon={<EditIcon/>}>
+                  <Button endIcon={<EditIcon/>} onClick = {function(){handleOpenListProducts(lineproduct.idLineOrder,lineproduct.product.idProduct,lineproduct.qtyLineOrder,lineproduct.product.qtyAvailable,true)}}>
                   </Button>
-                  <Button endIcon={<DeleteIcon/>} onClick ={function(){handleOpenLineOrder(lineproduct.idLineOrder)}}>
+                  <Button endIcon={<DeleteIcon/>} onClick ={function(){handleOpenDeleteLineOrder(lineproduct.idLineOrder)}}>
                   </Button> 
                 </Stack>
                 </TableCell>
@@ -295,16 +322,16 @@ export default function AddEditOrder() {
       </TableContainer> 
       </div>
           
-
+      {/*Modal agregar producto - Cabe mencionar que se puede condicionar para usar el mismo modal de agregar producto*/}
       <Modal
-      open={openProducts}
+      open={openProducts.state}
       onClose={handleCloseProducts}
       aria-labelledby="modal-modal-title"
       aria-describedby="modal-modal-description"
       >
       <Box sx={style}>
         <h1>
-          Add Product
+          {openProducts.type} line product
         </h1>
         <FormControl fullWidth>
         <InputLabel id="demo-simple-select-label">Product</InputLabel>
@@ -313,7 +340,6 @@ export default function AddEditOrder() {
           label="Products"
           onChange={event=>{
             setSelectedProduct(event.target.value);
-            console.log(selectedProduct);
           }}
         >{products.map((product)=>(
           <MenuItem 
@@ -324,38 +350,59 @@ export default function AddEditOrder() {
         ))}
         </Select>
         <Grid sx={{margin:1, display: 'grid'}} item>
+          <label>Quantity available</label>
+          <TextField
+            id="qtyAv" 
+            variant="outlined"
+            type="number"
+            value={selectedQtyAvailable}
+            disabled={true}
+            onChange={event => { 
+              setQty (event.target.value); 
+              console.log(selectedQty);
+            }}
+            />
+        </Grid>
+        <Grid sx={{margin:1, display: 'grid'}} item>
           <label>Quantity Required</label>
           <TextField
             id="qty" 
-            variant="outlined" 
+            variant="outlined"
+            type="number"
             value={selectedQty}
             InputProps={{
               inputProps:{
-                max:100,min:0
+                max:selectedQtyAvailable,min:1
               }
             }}
             disabled={false}
             onChange={event => { 
               setQty (event.target.value); 
-              console.log(selectedQty);
             }}
-            onKeyPress={event =>{
-              if (!/[0-9]/.test(event.key)) {
-                event.preventDefault();
-              }
-            }}/>
+            onKeyDown={(event) => {
+              event.preventDefault();
+            }}
+            />
         </Grid>
       </FormControl>
       <Stack spacing = {4} direction = "row">
-        <Button variant="contained" onClick={handleAddLine}>Add</Button>
+        <Button variant="contained" onClick={function(){
+          if (openProducts.type =='Add'){
+            handleAddLine();
+          }
+          else{
+            editLineOrder(openProducts.idLine);
+          }
+          }}>Save</Button>
         <Button variant="contained" onClick={handleCloseProducts}>Cancel</Button>
       </Stack>
       </Box>
       </Modal>
 
+      {/*Modal de eliminar linea*/}
       <Modal
-      open={openEditLine.state}
-      onClose={handleCloseLine}
+      open={openDeleteLine.state}
+      onClose={handleCloseDeleteLine}
       aria-labelledby="modal-modal-title"
       aria-describedby="modal-modal-description"
       >
@@ -367,12 +414,13 @@ export default function AddEditOrder() {
           ¿Are you sure you want to delete this line?
         </h4>
       <Stack spacing = {4} direction = "row">
-        <Button variant="contained" onClick={function(){deleteLineOrder(openEditLine.idLine)}}>Yes</Button>
-        <Button variant="contained" onClick={handleCloseLine}>No</Button>
+        <Button variant="contained" onClick={function(){deleteLineOrder(openDeleteLine.idLine)}}>Yes</Button>
+        <Button variant="contained" onClick={handleCloseDeleteLine}>No</Button>
       </Stack>
       </Box>
       </Modal>
 
+      {/*Modal de guardar cambios de orden*/}
       <Modal
       open={openSaveModal.state}
       onClose={handleCloseSaveModal}
