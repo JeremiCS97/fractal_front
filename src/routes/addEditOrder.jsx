@@ -53,8 +53,10 @@ export default function AddEditOrder() {
   const baseURL = "http://localhost:8080/";
 
   const type = queryParams.get("type");
-  
+
   const urlFindProduct = "http://localhost:8080/product/findAll";
+  
+  const urlFindProductAvailable = "http://localhost:8080/product/findAllProductAvailable";
 
   const urlInsertLineOrder = "http://localhost:8080/lineorder/insert";
 
@@ -63,6 +65,8 @@ export default function AddEditOrder() {
   const urlDeleteLineOrder = "http://localhost:8080/lineorder/delete/";
 
   const urlEditLineOrder = "http://localhost:8080/lineorder/edit/";
+  
+  let url ="";
 
   let URLOrder = "";
 
@@ -93,8 +97,15 @@ export default function AddEditOrder() {
 
   }
   
-  function loadProducts(){
-    axios.get(urlFindProduct).then((response)=>{
+  function loadProducts(e){
+    console.log("valor de e en loadproduct:"+e);
+    if (e!=0){
+      url = urlFindProduct;
+    }
+    else{
+      url = urlFindProductAvailable;
+    }
+    axios.get(url).then((response)=>{
       setProducts(response.data);
     })
   }
@@ -140,7 +151,7 @@ export default function AddEditOrder() {
       setQtyAvailable(qtyAv);
       setOpenProducts({idLine:id,idProduct:idp,cantLine:cant,qtyAvailable:qtyAv,type:'Edit',state:st});
     }
-    loadProducts();
+    loadProducts(cant);
   };
 
   const handleOpenDeleteLineOrder = (a) => {
